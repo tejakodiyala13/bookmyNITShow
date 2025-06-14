@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BookMyNIT - Book Show</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1><span>Book</span>MyNIT</h1>
+  </header>
+
+  <section class="show-info">
+    <h2>Select Show Timing</h2>
+    <select id="showTime">
+      <option value="10:30 AM">10:30 AM</option>
+      <option value="01:55 PM">01:55 PM</option>
+      <option value="05:20 PM">05:20 PM</option>
+    </select>
+
+    <h3>Select Your Seats</h3>
+    <div id="seatMap"></div>
+    <p id="selectedSeats"></p>
+    <button onclick="confirmBooking()">Confirm Booking</button>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 BookMyNIT | Made by Teja Kodiyala</p>
+  </footer>
+
+  <script>
+    const seatMapDiv = document.getElementById("seatMap");
+    const selectedSeatsP = document.getElementById("selectedSeats");
+    const selectedSeats = [];
+
+    const rows = "ABCDEFGHIJ";
+    for (let i = 0; i < rows.length; i++) {
+      const rowDiv = document.createElement("div");
+      rowDiv.textContent = rows[i] + ": ";
+      for (let j = 1; j <= 10; j++) {
+        const seatBtn = document.createElement("button");
+        seatBtn.textContent = j;
+        seatBtn.style.margin = "2px";
+        seatBtn.onclick = () => {
+          const seatId = rows[i] + j;
+          if (selectedSeats.includes(seatId)) {
+            selectedSeats.splice(selectedSeats.indexOf(seatId), 1);
+            seatBtn.style.backgroundColor = "";
+          } else {
+            selectedSeats.push(seatId);
+            seatBtn.style.backgroundColor = "#e94560";
+          }
+          selectedSeatsP.textContent = "Selected Seats: " + selectedSeats.join(", ");
+        };
+        rowDiv.appendChild(seatBtn);
+      }
+      seatMapDiv.appendChild(rowDiv);
+    }
+
+    function confirmBooking() {
+      if (selectedSeats.length === 0) {
+        alert("Please select at least one seat.");
+        return;
+      }
+      const time = document.getElementById("showTime").value;
+      alert("You booked " + selectedSeats.length + " seat(s) for " + time + ":\n" + selectedSeats.join(", "));
+    }
+  </script>
+</body>
+</html>
