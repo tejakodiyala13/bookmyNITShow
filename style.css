@@ -1,10 +1,13 @@
 
+* { box-sizing: border-box; }
 body {
   font-family: 'Inter', sans-serif;
   margin: 0;
   padding: 0;
   background: #f4f4f9;
   color: #333;
+  max-width: 1200px;
+  margin: auto;
 }
 header {
   background-color: #1a1a2e;
@@ -13,12 +16,21 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+header h1 span { color: #e94560; }
 header nav a {
   color: white;
   margin: 0 15px;
   text-decoration: none;
   font-weight: 600;
+}
+header nav a:hover {
+  text-decoration: underline;
+  color: #e94560;
 }
 .hero {
   background: url('https://i.imgur.com/0rZ3aGg.jpeg') center/cover no-repeat;
@@ -28,6 +40,12 @@ header nav a {
   justify-content: center;
   color: white;
   text-align: center;
+  position: relative;
+}
+.hero .overlay {
+  background: rgba(0, 0, 0, 0.5);
+  padding: 30px;
+  border-radius: 12px;
 }
 .hero h1 {
   font-size: 48px;
@@ -41,4 +59,40 @@ header nav a {
   color: white;
   cursor: pointer;
   border-radius: 8px;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+.hero button:hover {
+  background-color: #d73752;
+  transform: scale(1.05);
+}
+.section {
+  padding: 40px;
+  margin-top: 20px;
+  border-radius: 12px;
+}
+.white { background: white; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
+.gray { background: #f1f1f1; }
+.trailer { background: #f9f9ff; text-align: center; }
+.book-btn {
+  margin-top: 20px;
+  background-color: #1a1a2e;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.book-btn:hover {
+  background-color: #33334d;
+}
+footer {
+  background-color: #1a1a2e;
+  color: white;
+  text-align: center;
+  padding: 20px;
+  margin-top: 40px;
+}
+@media (max-width: 600px) {
+  .hero h1 { font-size: 28px; }
+  .hero button { font-size: 16px; padding: 10px 20px; }
 }

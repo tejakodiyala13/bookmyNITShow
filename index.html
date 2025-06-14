@@ -5,29 +5,65 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BookMyNIT - Telugu Shows</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <h1>BookMyNIT</h1>
+    <h1><span>Book</span>MyNIT</h1>
     <nav>
       <a href="#">Home</a>
-      <a href="#">Shows</a>
-      <a href="#">Contact</a>
-      <span id="userName"></span>
-      <button id="loginBtn" onclick="login()">Login with Google</button>
-      <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
+      <a href="#contact">Contact</a>
     </nav>
   </header>
 
   <section class="hero">
-    <div>
+    <div class="overlay">
       <h1>Special Telugu Shows at INOX Srinagar</h1>
       <p>Exclusive for NIT Srinagar Students</p>
-      <button>Book Now</button>
+      <button onclick="location.href='#todayShow'">Book Now</button>
     </div>
   </section>
 
-  <script type="module" src="app.js"></script>
+  <section id="todayShow" class="section white">
+    <h2 class="highlight">Today’s Telugu Show at INOX Srinagar</h2>
+    <p><strong>Date:</strong> Sunday, June 15, 2025</p>
+    <p><strong>Showtimes:</strong> 10:30 AM, 01:55 PM, 05:20 PM</p>
+
+    <h3>Ticket Pricing:</h3>
+    <ul>
+      <li>Rs. 400 – Royale Club (Rows A–B)</li>
+      <li>Rs. 300 – Royale (Rows C–E)</li>
+      <li>Rs. 250 – Club (Rows F–H)</li>
+      <li>Rs. 220 – Executive (Rows I–J)</li>
+    </ul>
+
+    <h3>Seats Available for 01:55 PM Show:</h3>
+    <p>Majority of seats are still open! Grab your spot early for the best view.</p>
+
+    <button class="book-btn" onclick="window.open('https://in.bookmyshow.com/buytickets/movie-srin-ET00393297-MT/20250615#!seatlayout')">
+      Book on BookMyShow
+    </button>
+  </section>
+
+  <section class="section trailer">
+    <h2>Watch the Official Trailer</h2>
+    <iframe width="100%" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="YouTube trailer" frameborder="0" allowfullscreen></iframe>
+  </section>
+
+  <section class="section white">
+    <h2>INOX Srinagar - Location</h2>
+    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3424.7859282957877!2d74.8459012151293!3d34.083670224137224!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38e1856104bcb011%3A0x4bbd7b8e507dc8a2!2sINOX%20Multiplex!5e0!3m2!1sen!2sin!4v1718385739473!5m2!1sen!2sin" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+  </section>
+
+  <section class="section gray">
+    <h2>What Students Say</h2>
+    <blockquote>“Super convenient booking! Loved the vibe of watching a Telugu movie with NIT crowd.”</blockquote>
+    <blockquote>“Smooth process, and the discounted rates made it even better.”</blockquote>
+  </section>
+
+  <footer id="contact">
+    <p>&copy; 2025 BookMyNIT | Made with ❤️ by Teja Kodiyala</p>
+    <p>Contact: 9491816263 | teja_2022bece043@nitsri.ac.in</p>
+  </footer>
 </body>
 </html>
