@@ -2,70 +2,156 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>BookMyNIT - Book Show</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="style.css">
+  <title>Book Seats - BookMyNIT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    #seatMap {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 8px;
+      justify-content: center;
+      max-width: 400px;
+      margin: 20px auto;
+    }
+    .seat {
+      background-color: #f0f0f0;
+      border: 1px solid #999;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .seat.selected {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .seat:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1><span>Book</span>MyNIT</h1>
-  </header>
+  <h1>Select Your Seats</h1>
 
-  <section class="show-info">
-    <h2>Select Show Timing</h2>
-    <select id="showTime">
-      <option value="10:30 AM">10:30 AM</option>
-      <option value="01:55 PM">01:55 PM</option>
-      <option value="05:20 PM">05:20 PM</option>
-    </select>
+  <label for="showTime">Choose a Show Time:</label>
+  <select id="showTime">
+    <option value="10:30 AM">10:30 AM</option>
+    <option value="01:55 PM" selected>01:55 PM</option>
+    <option value="05:20 PM">05:20 PM</option>
+  </select>
 
-    <h3>Select Your Seats</h3>
-    <div id="seatMap"></div>
-    <p id="selectedSeats"></p>
-    <button onclick="confirmBooking()">Confirm Booking</button>
-  </section>
+  <div id="seatMap"></div>
+  <p id="selectedSeatsText">Selected Seats: <span id="selectedSeats"></span></p>
+  <button onclick="confirmBooking()">Confirm Booking</button>
 
-  <footer>
-    <p>&copy; 2025 BookMyNIT | Made by Teja Kodiyala</p>
-  </footer>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  <script>
-    const seatMapDiv = document.getElementById("seatMap");
+    const firebaseConfig = {
+      apiKey: "AIzaSyAz7qSNbyRvwb0nCaGYVl8hSLYfQzvg32Y",
+      authDomain: "bookmynitshow.firebaseapp.com",
+      projectId: "bookmynitshow",
+      storageBucket: "bookmynitshow.appspot.com",
+      messagingSenderId: "31713835175",
+      appId: "1:31713835175:web:9deb1d51f53dc34cfdc382"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const rows = ["A", "B", "C", "D", "E"];
+    const seatsPerRow = 10;
+    const seatMap = document.getElementById("seatMap");
     const selectedSeatsP = document.getElementById("selectedSeats");
     const selectedSeats = [];
 
-    const rows = "ABCDEFGHIJ";
-    for (let i = 0; i < rows.length; i++) {
-      const rowDiv = document.createElement("div");
-      rowDiv.textContent = rows[i] + ": ";
-      for (let j = 1; j <= 10; j++) {
-        const seatBtn = document.createElement("button");
-        seatBtn.textContent = j;
-        seatBtn.style.margin = "2px";
-        seatBtn.onclick = () => {
-          const seatId = rows[i] + j;
-          if (selectedSeats.includes(seatId)) {
-            selectedSeats.splice(selectedSeats.indexOf(seatId), 1);
-            seatBtn.style.backgroundColor = "";
-          } else {
-            selectedSeats.push(seatId);
-            seatBtn.style.backgroundColor = "#e94560";
-          }
-          selectedSeatsP.textContent = "Selected Seats: " + selectedSeats.join(", ");
-        };
-        rowDiv.appendChild(seatBtn);
+    // Create seat layout
+    rows.forEach(row => {
+      for (let i = 1; i <= seatsPerRow; i++) {
+        const btn = document.createElement("button");
+        btn.className = "seat";
+        btn.textContent = i;
+        btn.dataset.seat = row + i;
+        btn.onclick = () => toggleSeat(btn);
+        seatMap.appendChild(btn);
       }
-      seatMapDiv.appendChild(rowDiv);
+    });
+
+    function toggleSeat(btn) {
+      const seatId = btn.dataset.seat;
+      if (btn.classList.contains("selected")) {
+        btn.classList.remove("selected");
+        selectedSeats.splice(selectedSeats.indexOf(seatId), 1);
+      } else {
+        btn.classList.add("selected");
+        selectedSeats.push(seatId);
+      }
+      selectedSeatsP.textContent = selectedSeats.join(", ");
     }
 
-    function confirmBooking() {
+    async function disableBookedSeats(time) {
+      const id = time.replace(/[^a-zA-Z0-9]/g, "_");
+      const ref = doc(db, "shows", id);
+      const snap = await getDoc(ref);
+
+      if (snap.exists()) {
+        const booked = snap.data().booked || [];
+        document.querySelectorAll(".seat").forEach(btn => {
+          const seatId = btn.dataset.seat;
+          if (booked.includes(seatId)) {
+            btn.disabled = true;
+          } else {
+            btn.disabled = false;
+          }
+        });
+      }
+    }
+
+    async function confirmBooking() {
       if (selectedSeats.length === 0) {
         alert("Please select at least one seat.");
         return;
       }
+
       const time = document.getElementById("showTime").value;
-      alert("You booked " + selectedSeats.length + " seat(s) for " + time + ":\n" + selectedSeats.join(", "));
+      const docId = time.replace(/[^a-zA-Z0-9]/g, "_");
+      const ref = doc(db, "shows", docId);
+      const snap = await getDoc(ref);
+      const alreadyBooked = snap.exists() ? snap.data().booked || [] : [];
+
+      const overlap = selectedSeats.filter(seat => alreadyBooked.includes(seat));
+      if (overlap.length > 0) {
+        alert("Some seats were already booked: " + overlap.join(", "));
+        return;
+      }
+
+      await setDoc(ref, {
+        booked: [...alreadyBooked, ...selectedSeats]
+      }, { merge: true });
+
+      alert("Seats booked: " + selectedSeats.join(", "));
+      window.location.reload();
     }
+
+    document.getElementById("showTime").addEventListener("change", () => {
+      selectedSeats.length = 0;
+      selectedSeatsP.textContent = "";
+      document.querySelectorAll(".seat").forEach(btn => btn.classList.remove("selected"));
+      disableBookedSeats(document.getElementById("showTime").value);
+    });
+
+    // Initial disable
+    disableBookedSeats(document.getElementById("showTime").value);
   </script>
 </body>
 </html>
