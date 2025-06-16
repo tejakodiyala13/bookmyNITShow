@@ -97,6 +97,11 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+    if (sessionStorage.getItem("justBooked") === "true") {
+  sessionStorage.removeItem("justBooked");
+  alert("You’ve already booked your seats.");
+  window.location.href = "home.html"; // or disable booking UI instead
+}
     const adminEmails = ["tejakodiyala01@gmail.com"]; // change to your admin email
 
     const rows = ["A", "B", "C", "D", "E"];
@@ -200,9 +205,11 @@
       await setDoc(userRef, {
         bookings: [...oldBookings, ...userSeats]
       }, { merge: true });
-
-      alert("Seats booked: " + selectedSeats.join(", "));
-      window.location.reload();
+      sessionStorage.setItem("justBooked", "true");
+     document.getElementById("successAnimation").style.display = "block";
+setTimeout(() => {
+  window.location.reload();
+}, 2000);
     }
 
     async function loadUserBookings(email) {
@@ -228,6 +235,10 @@
       document.querySelectorAll(".seat").forEach(btn => btn.classList.remove("selected"));
       disableBookedSeats(document.getElementById("showTime").value);
     });
+    <div id="successAnimation" style="display:none;">
+  <h2 style="color: green;">🎉 Booking Successful!</h2>
+</div>
+
 
   </script>
 </body>
