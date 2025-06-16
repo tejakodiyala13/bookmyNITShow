@@ -34,13 +34,29 @@
       cursor: not-allowed;
     }
     button {
-      margin-top: 20px;
+      margin: 10px;
       padding: 10px 20px;
+    }
+    #resetBtn {
+      background-color: red;
+      color: white;
+      display: none;
+    }
+    @media screen and (max-width: 600px) {
+      #seatMap {
+        grid-template-columns: repeat(5, 1fr);
+        max-width: 100%;
+      }
+      button {
+        width: 100%;
+        font-size: 14px;
+      }
     }
   </style>
 </head>
 <body>
   <h1>Select Your Seats</h1>
+  <p>Logged in as: <span id="userEmail">Not logged in</span></p>
 
   <label for="showTime">Choose a Show Time:</label>
   <select id="showTime">
@@ -50,12 +66,21 @@
   </select>
 
   <div id="seatMap"></div>
-  <p id="selectedSeatsText">Selected Seats: <span id="selectedSeats"></span></p>
-  <button id="confirmBookingBtn">Confirm Booking</button>
+  <p>Selected Seats: <span id="selectedSeats"></span></p>
+  <button onclick="confirmBooking()">Confirm Booking</button>
+  <button id="resetBtn" onclick="resetSeats()">Reset Seats (Admin)</button>
+
+  <h3>My Bookings</h3>
+  <div id="history"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      getFirestore, doc, getDoc, setDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      getAuth, onAuthStateChanged, signInWithEmailAndPassword
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAz7qSNbyRvwb0nCaGYVl8hSLYfQzvg32Y",
@@ -69,6 +94,8 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
+    const adminEmails = ["admin@example.com"]; // change to your admin email
 
     const rows = ["A", "B", "C", "D", "E"];
     const seatsPerRow = 10;
@@ -100,6 +127,29 @@
       selectedSeatsP.textContent = selectedSeats.join(", ");
     }
 
+    async function login() {
+      const email = prompt("Enter email:");
+      const password = prompt("Enter password:");
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        alert("Login failed: " + err.message);
+      }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        await login();
+      } else {
+        document.getElementById("userEmail").textContent = user.email;
+        if (adminEmails.includes(user.email)) {
+          document.getElementById("resetBtn").style.display = "inline-block";
+        }
+        disableBookedSeats(document.getElementById("showTime").value);
+        loadUserBookings(user.email);
+      }
+    });
+
     async function disableBookedSeats(time) {
       const id = time.replace(/[^a-zA-Z0-9]/g, "_");
       const ref = doc(db, "shows", id);
@@ -109,20 +159,16 @@
         const booked = snap.data().booked || [];
         document.querySelectorAll(".seat").forEach(btn => {
           const seatId = btn.dataset.seat;
-          if (booked.includes(seatId)) {
-            btn.disabled = true;
-          } else {
-            btn.disabled = false;
-          }
+          const isBooked = booked.some(s => s.seat === seatId);
+          btn.disabled = isBooked;
         });
       }
     }
 
     async function confirmBooking() {
-      if (selectedSeats.length === 0) {
-        alert("Please select at least one seat.");
-        return;
-      }
+      const user = auth.currentUser;
+      if (!user) return alert("Please log in first.");
+      if (selectedSeats.length === 0) return alert("Please select at least one seat.");
 
       const time = document.getElementById("showTime").value;
       const docId = time.replace(/[^a-zA-Z0-9]/g, "_");
@@ -130,17 +176,47 @@
       const snap = await getDoc(ref);
       const alreadyBooked = snap.exists() ? snap.data().booked || [] : [];
 
-      const overlap = selectedSeats.filter(seat => alreadyBooked.includes(seat));
-      if (overlap.length > 0) {
-        alert("Some seats were already booked: " + overlap.join(", "));
-        return;
-      }
+      const overlap = selectedSeats.filter(seat =>
+        alreadyBooked.some(b => b.seat === seat)
+      );
+      if (overlap.length > 0) return alert("Already booked: " + overlap.join(", "));
+
+      const userSeats = selectedSeats.map(seat => ({
+        seat,
+        user: user.email,
+        timestamp: new Date().toISOString()
+      }));
 
       await setDoc(ref, {
-        booked: [...alreadyBooked, ...selectedSeats]
+        booked: [...alreadyBooked, ...userSeats]
+      }, { merge: true });
+
+      const userRef = doc(db, "users", user.email);
+      const userSnap = await getDoc(userRef);
+      const oldBookings = userSnap.exists() ? userSnap.data().bookings || [] : [];
+
+      await setDoc(userRef, {
+        bookings: [...oldBookings, ...userSeats]
       }, { merge: true });
 
       alert("Seats booked: " + selectedSeats.join(", "));
+      window.location.reload();
+    }
+
+    async function loadUserBookings(email) {
+      const ref = doc(db, "users", email);
+      const snap = await getDoc(ref);
+      const bookings = snap.exists() ? snap.data().bookings || [] : [];
+      document.getElementById("history").innerHTML = bookings
+        .map(b => `${b.seat} @ ${new Date(b.timestamp).toLocaleString()}`)
+        .join("<br>");
+    }
+
+    async function resetSeats() {
+      const time = document.getElementById("showTime").value;
+      const docId = time.replace(/[^a-zA-Z0-9]/g, "_");
+      await setDoc(doc(db, "shows", docId), { booked: [] });
+      alert("Seats reset for " + time);
       window.location.reload();
     }
 
@@ -151,10 +227,6 @@
       disableBookedSeats(document.getElementById("showTime").value);
     });
 
-    document.getElementById("confirmBookingBtn").addEventListener("click", confirmBooking);
-
-    // Initial disable
-    disableBookedSeats(document.getElementById("showTime").value);
   </script>
 </body>
 </html>
